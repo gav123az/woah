@@ -3,7 +3,7 @@ const { errorHandler } = require("../auth");
 
 module.exports.createProduct = async (req, res) => {
     try {
-        const { name, description, price, stock } = req.body;
+        const { name, description, price, stock, url } = req.body;
         const existing = await Product.findOne({ name: { $regex: new RegExp('^' + name + '$', 'i') } });
         if (existing) {
             return res.status(400).send({ error: "Product already created" });
@@ -11,7 +11,7 @@ module.exports.createProduct = async (req, res) => {
         if (stock === undefined || isNaN(Number(stock)) || Number(stock) < 0) {
             return res.status(400).send({ error: "Stock is required and must be a non-negative number" });
         }
-        const product = new Product({ name, description, price, stock: Number(stock) });
+        const product = new Product({ name, description, price, stock: Number(stock), url });
         await product.save();
         return res.status(201).send({ message: "Product created successfully", product });
     } catch (error) {
@@ -60,7 +60,7 @@ module.exports.updateProduct = async (req, res) => {
             return res.status(403).send({ error: "Cannot update archived product" });
         }
         let changed = false;
-        ['name','description','price','stock'].forEach(field => {
+        ['name','description','price','stock','url'].forEach(field => {
             if (updates[field] !== undefined) {
                 const oldVal = (field === 'price' || field === 'stock')
                     ? String(product[field])
@@ -74,7 +74,7 @@ module.exports.updateProduct = async (req, res) => {
         if (!changed) {
             return res.status(200).send({ message: "Product already updated", product });
         }
-        for (const field of ['name','description','price','stock']) {
+        for (const field of ['name','description','price','stock','url']) {
             if (updates[field] !== undefined) {
                 if (field === 'price' || field === 'stock') {
                     const numVal = Number(updates[field]);

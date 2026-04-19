@@ -1,19 +1,13 @@
-// Imports from the bootstrap library
-// This will allow us to use bootstrap in all components (universal)
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/js/bootstrap.min.js';
 import 'bootstrap-icons/font/bootstrap-icons.min.css';
-
-// Import the styling library of notyf to the whole project.
 import 'notyf/notyf.min.css';
 
-import { createApp } from 'vue'
-import './style.css'
-// Inject our global store into our main.js to allow all components to access our store.
+import { createApp } from 'vue';
+import './style.css';
 import { createPinia } from 'pinia';
-import App from './App.vue'
+import App from './App.vue';
 
-// Import the Page components here to setup the routing in your app.
 import HomePage from './pages/HomePage.vue';
 import RegisterPage from './pages/RegisterPage.vue';
 import LoginPage from './pages/LoginPage.vue';
@@ -24,10 +18,10 @@ import ProductDetailsPage from './pages/ProductDetailsPage.vue';
 import OrdersPage from './pages/OrdersPage.vue';
 import AdminDashboardPage from './pages/AdminDashboardPage.vue';
 import CartPage from './pages/CartPage.vue';
+import ProfilePage from './pages/ProfilePage.vue';
 
 import { createRouter, createWebHistory } from 'vue-router';
 
-// Route Configuration using Vue-Router:
 const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -64,20 +58,22 @@ const router = createRouter({
         {
             path: '/orders',
             name: 'Orders',
-            component: OrdersPage,
-            meta: { requiresAuth: true }
+            component: OrdersPage
         },
         {
             path: '/cart',
             name: 'Cart',
-            component: CartPage,
-            meta: { requiresAuth: true }
+            component: CartPage
+        },
+        {
+            path: '/profile',
+            name: 'Profile',
+            component: ProfilePage
         },
         {
             path: '/admin',
             name: 'Admin',
-            component: AdminDashboardPage,
-            meta: { requiresAdmin: true }
+            component: AdminDashboardPage
         },
         {
             path: '/:catchAll(.*)',
@@ -87,46 +83,6 @@ const router = createRouter({
 });
 
 const app = createApp(App);
-
-// createPinia() is a library that will allow us to use and manage our Pinia stores in our app.
 app.use(createPinia());
-
-// app.use() will allows us to use global libraries to our Vue app such as this router.
 app.use(router);
-
-/**
- * Best-practice: Register Pinia, Router, then attach route guards, THEN mount.
- */
-import { useGlobalStore } from './stores/global.js';
-
-// Add navigation guards (strict, safe)
-router.beforeEach((to, from, next) => {
-    // Always get the latest store instance
-    const store = useGlobalStore();
-    const token = store.user.token;
-    const isAdmin = store.user.isAdmin;
-
-    if(to.meta.requiresAdmin) {
-        if (!token) {
-            // Not logged in at all
-            next({ name: 'Login' });
-        } else if (!isAdmin) {
-            // Logged in, not admin
-            next({ name: 'Home' });
-        } else {
-            next();
-        }
-    } else if(to.meta.requiresAuth) {
-        if (!token) {
-            // Not logged in at all
-            next({ name: 'Login' });
-        } else {
-            next();
-        }
-    } else {
-        next();
-    }
-});
-
-// Mount or render the app components into the HTML element.
 app.mount('#app');

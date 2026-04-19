@@ -14,10 +14,6 @@
 </script>
 
 <template>
-        <NavbarComponent />
-            <router-view />
-    
+    <NavbarComponent />
+    <router-view />
 </template>
-
-
-

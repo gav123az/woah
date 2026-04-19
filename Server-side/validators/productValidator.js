@@ -9,6 +9,9 @@ body("name")
     body("price")
         .notEmpty().withMessage("Product price is required")
         .isFloat({ gt: 0 }).withMessage("Product price must be a positive number"),
+    body("url")
+        .optional()
+        .isURL().withMessage("Photo URL must be a valid URL"),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -28,6 +31,9 @@ body("name")
     .isLength({ min: 5 }).withMessage("Product description must be at least 5 characters long"),
     body("price")
         .isFloat({ gt: 0 }).withMessage("Product price must be a positive number"),
+    body("url")
+        .optional()
+        .isURL().withMessage("Photo URL must be a valid URL"),
     (req, res, next) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
