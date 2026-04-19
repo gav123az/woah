@@ -1,47 +1,43 @@
 <script setup>
-    import { ref, watch, onBeforeMount } from 'vue';
-    import { Notyf } from 'notyf';
-    import { useGlobalStore } from '../stores/global';
-    import api from '../api';
-    import { useRouter } from 'vue-router';
+    import { ref, watch, onBeforeMount } from "vue";
+    import { Notyf } from "notyf";
+    import { useGlobalStore } from "../stores/global";
+    import api from "../api";
+    import { useRouter } from "vue-router";
 
     const router = useRouter();
     const globalStore = useGlobalStore();
 
-    const email = ref('');
-    const password = ref('');
+    const email = ref("");
+    const password = ref("");
     const isEnabled = ref(false);
 
     const notyf = new Notyf();
 
-    watch([email, password], (currentValue, oldValue) => {
-        if (currentValue.every(input => input !== "")) {
-            isEnabled.value = true;
-        } else {
-            isEnabled.value = false;
-        }
+    watch([email, password], (currentValue) => {
+        isEnabled.value = currentValue.every((input) => input !== "");
     });
 
     async function handleSubmit(e) {
         e.preventDefault();
         try {
-            const response = await api.post('/users/login', {
+            const response = await api.post("/users/login", {
                 email: email.value,
                 password: password.value
             });
             const token = response.data.access;
             if (token) {
-                localStorage.setItem('token', token);
+                localStorage.setItem("token", token);
                 await globalStore.getUserDetails(token);
 
-                notyf.success('Login Successful');
-                email.value = '';
-                password.value = '';
+                notyf.success("Login Successful");
+                email.value = "";
+                password.value = "";
 
                 if (globalStore.user.isAdmin) {
-                    router.push({ path: '/admin' });
+                    router.push({ path: "/admin" });
                 } else {
-                    router.push({ path: '/products' });
+                    router.push({ path: "/products" });
                 }
                 return;
             }
@@ -53,14 +49,14 @@
                 notyf.error(error.response.data.message);
             } else {
                 console.error(error);
-                notyf.error('Login Failed. Please contact administrator.');
+                notyf.error("Login Failed. Please contact administrator.");
             }
         }
     }
 
     onBeforeMount(() => {
         if (globalStore.user && globalStore.user.token) {
-            router.push({ path: '/products' });
+            router.push({ path: "/products" });
         }
     });
 </script>

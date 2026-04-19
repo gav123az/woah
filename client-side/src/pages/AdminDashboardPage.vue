@@ -1,129 +1,166 @@
 <script setup>
-    import { ref, onMounted } from "vue";
-    import api from "../api.js";
-    import { Notyf } from "notyf";
-    const notyf = new Notyf();
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useGlobalStore } from "../stores/global.js";
+import api from "../api.js";
+import { Notyf } from "notyf";
+import UserManagementComponent from "../components/UserManagementComponent.vue";
+const notyf = new Notyf();
+const router = useRouter();
+const globalStore = useGlobalStore();
+const showUserManagement = ref(false);
+function toggleUserManagement() {
+    showUserManagement.value = !showUserManagement.value;
+}
 
-    const products = ref([]);
-    const loading = ref(false);
-    const error = ref("");
-    const showCreateModal = ref(false);
-    const editMode = ref(false);
+const products = ref([]);
+const loading = ref(false);
+const error = ref("");
+const showCreateModal = ref(false);
+const editMode = ref(false);
 
-    const createForm = ref({
-        name: "",
-        description: "",
-        price: "",
-        stock: ""
-    });
+const createForm = ref({
+    name: "",
+    description: "",
+    price: "",
+    stock: "",
+    url: ""
+});
 
-    function openCreateModal() {
-        showCreateModal.value = true;
+function openCreateModal() {
+    showCreateModal.value = true;
+}
+function closeCreateModal() {
+    showCreateModal.value = false;
+    createForm.value = { name: "", description: "", price: "", stock: "", url: "" };
+    error.value = "";
+}
+
+async function fetchProducts() {
+    try {
+        const { data } = await api.get("/products/all");
+        products.value = data.products ?? data ?? [];
+    } catch {
+        error.value = "Failed to fetch products.";
     }
-    function closeCreateModal() {
-        showCreateModal.value = false;
-        createForm.value = { name: "", description: "", price: "", stock: "" };
-        error.value = "";
-    }
+}
 
-    async function fetchProducts() {
-        try {
-            const { data } = await api.get("/products/all");
-            products.value = data.products ?? data ?? [];
-        } catch {
-            error.value = "Failed to fetch products.";
-        }
+async function handleCreateProduct() {
+    loading.value = true;
+    error.value = "";
+    try {
+        await api.post("/products", {
+            ...createForm.value,
+            price: Number(createForm.value.price),
+            stock: Number(createForm.value.stock),
+            url: createForm.value.url
+        });
+        await fetchProducts();
+        closeCreateModal();
+        notyf.success("Product added successfully!");
+    } catch (err) {
+        error.value = err?.response?.data?.error || err?.response?.data?.message || "Failed to add product.";
+        notyf.error(error.value);
+    } finally {
+        loading.value = false;
     }
+}
 
-    async function handleCreateProduct() {
-        loading.value = true;
-        error.value = "";
-        try {
-            await api.post("/products", {
-                ...createForm.value,
-                price: Number(createForm.value.price),
-                stock: Number(createForm.value.stock)
-            });
-            await fetchProducts();
-            closeCreateModal();
-            notyf.success("Product added successfully!");
-        } catch (err) {
-            error.value = err?.response?.data?.error || err?.response?.data?.message || "Failed to add product.";
-            notyf.error(error.value);
-        } finally {
-            loading.value = false;
-        }
+const editForm = ref({
+    _id: null,
+    name: "",
+    description: "",
+    price: "",
+    stock: "",
+    url: ""
+});
+const editLoading = ref(false);
+const editError = ref("");
+
+function startEdit(product) {
+    editForm.value = {
+        _id: product._id,
+        name: product.name,
+        description: product.description ?? "",
+        price: product.price,
+        stock: product.stock,
+        url: product.url ?? ""
+    };
+    editMode.value = true;
+}
+function closeEdit() {
+    editMode.value = false;
+    editForm.value = { _id: null, name: "", description: "", price: "", stock: "", url: "" };
+    editError.value = "";
+}
+
+async function handleEditProduct() {
+    editLoading.value = true;
+    editError.value = "";
+    try {
+        await api.patch("/products/" + editForm.value._id + "/update", {
+            name: editForm.value.name,
+            description: editForm.value.description,
+            price: Number(editForm.value.price),
+            stock: Number(editForm.value.stock),
+            url: editForm.value.url
+        });
+        await fetchProducts();
+        closeEdit();
+        notyf.success("Product updated successfully!");
+    } catch (err) {
+        editError.value = err?.response?.data?.message || "Failed to update product.";
+    } finally {
+        editLoading.value = false;
     }
+}
 
-    const editForm = ref({
-        _id: null,
-        name: "",
-        description: "",
-        price: "",
-        stock: ""
-    });
-    const editLoading = ref(false);
-    const editError = ref("");
-
-    function startEdit(product) {
-        editForm.value = {
-            _id: product._id,
-            name: product.name,
-            description: product.description ?? "",
-            price: product.price,
-            stock: product.stock
-        };
-        editMode.value = true;
+async function toggleActive(product) {
+    try {
+        await api.patch(`/products/${product._id}/${product.isActive ? "archive" : "activate"}`);
+        await fetchProducts();
+    } catch {
+        error.value = `Failed to ${product.isActive ? "deactivate" : "reactivate"} product.`;
     }
-    function closeEdit() {
-        editMode.value = false;
-        editForm.value = { _id: null, name: "", description: "", price: "", stock: "" };
-        editError.value = "";
-    }
+}
 
-    async function handleEditProduct() {
-        editLoading.value = true;
-        editError.value = "";
-        try {
-            await api.patch("/products/" + editForm.value._id + "/update", {
-                name: editForm.value.name,
-                description: editForm.value.description,
-                price: Number(editForm.value.price),
-                stock: Number(editForm.value.stock),
-            });
-            await fetchProducts();
-            closeEdit();
-            notyf.success("Product updated successfully!");
-        } catch (err) {
-            editError.value = err?.response?.data?.message || "Failed to update product.";
-        } finally {
-            editLoading.value = false;
-        }
-    }
 
-    
-    async function toggleActive(product) {
-        try {
-            await api.patch(`/products/${product._id}/${product.isActive ? "archive" : "activate"}`);
-            await fetchProducts();
-        } catch {
-            error.value = `Failed to ${product.isActive ? "deactivate" : "reactivate"} product.`;
-        }
-    }
 
-    onMounted(() => {
-        fetchProducts();
-    });
+onMounted(() => {
+    if (!globalStore.user.isAdmin) {
+        router.replace("/");
+        return;
+    }
+    fetchProducts();
+});
 </script>
 
 <template>
     <div class="admin-container">
         <div class="admin-header">
             <h1 class="admin-title">Admin Dashboard</h1>
-            <button class="btn-add-product" @click="openCreateModal">
-                <i class="bi bi-plus-lg me-2"></i> Add Product
-            </button>
+            <div class="admin-actions">
+                <button 
+                    class="btn-view-orders" 
+                    @click="$router.push('/orders')"
+                >
+                    <i class="bi bi-list-check me-2"></i> View Orders
+                </button>
+                <button class="btn-user-mgmt" style="background:#905ddc;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer;transition:all 0.3s ease;display:flex;align-items:center;box-shadow:0 2px 8px rgba(44, 43, 77, 0.15);"
+                    @click="toggleUserManagement"
+                >
+                    <i class="bi bi-person-gear me-2"></i>
+                    {{ showUserManagement ? 'Hide' : 'Show' }} User Management
+                </button>
+                <button class="btn-add-product" @click="openCreateModal">
+                    <i class="bi bi-plus-lg me-2"></i> Add Product
+                </button>
+            </div>
         </div>
+        <div v-if="showUserManagement">
+            <UserManagementComponent />
+        </div>
+
         <div class="products-table-wrapper">
             <table class="products-table">
                 <thead>
@@ -133,6 +170,7 @@
                         <th>Description</th>
                         <th>Price</th>
                         <th>Stock</th>
+                        <th>Photo</th>
                         <th>Availability</th>
                         <th>Actions</th>
                     </tr>
@@ -144,6 +182,10 @@
                         <td>{{ product.description }}</td>
                         <td>${{ product.price }}</td>
                         <td>{{ product.stock }}</td>
+                        <td>
+                            <img v-if="product.url" :src="product.url" :alt="product.name" class="product-thumbnail" />
+                            <span v-else class="no-image">No Image</span>
+                        </td>
                         <td>
                             <span class="status-badge" :class="{ 'status-active': product.isActive, 'status-inactive': !product.isActive }">
                                 {{ product.isActive ? 'Available' : 'Unavailable' }}
@@ -160,18 +202,17 @@
                         </td>
                     </tr>
                     <tr v-if="!products.length">
-                        <td colspan="7" class="no-products">No products found.</td>
+                        <td colspan="8" class="no-products">No products found.</td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
-        <!-- Add Product Modal -->
         <div v-if="showCreateModal" class="modal-overlay">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Add Product</h5>
-                    <button class="modal-close" @click="closeCreateModal">×</button>
+                    <button class="modal-close" @click="closeCreateModal"><i class="bi bi-x"></i></button>
                 </div>
                 <div class="modal-body">
                     <form @submit.prevent="handleCreateProduct">
@@ -191,6 +232,10 @@
                             <label class="form-label">Stock</label>
                             <input v-model.number="createForm.stock" type="number" min="0" class="form-input" placeholder="Enter stock" required />
                         </div>
+                        <div class="form-group">
+                            <label class="form-label">Photo URL</label>
+                            <input v-model="createForm.url" type="url" class="form-input" placeholder="Enter photo URL (e.g. https://...)" />
+                        </div>
                         
                         <button :disabled="loading" type="submit" class="btn-submit">
                             {{ loading ? 'Adding...' : 'Add Product' }}
@@ -201,36 +246,39 @@
             </div>
         </div>
 
-        <!-- Edit Product Modal -->
         <div v-if="editMode" class="modal-overlay">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Edit Product</h5>
-                    <button class="modal-close" @click="closeEdit">×</button>
+                    <button class="modal-close" @click="closeEdit"><i class="bi bi-x"></i></button>
                 </div>
                 <div class="modal-body">
                     <form @submit.prevent="handleEditProduct">
-                        <div class="form-group">
-                            <label class="form-label">Name</label>
-                            <input v-model="editForm.name" type="text" class="form-input" required placeholder="Enter new name" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Description</label>
-                            <input v-model="editForm.description" type="text" class="form-input" required placeholder="Enter new description" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Price</label>
-                            <input v-model.number="editForm.price" type="number" min="0" step="any" class="form-input" required placeholder="Enter new price" />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Stock</label>
-                            <input v-model.number="editForm.stock" type="number" min="0" class="form-input" required placeholder="Enter new stock" />
-                        </div>
-                        <button :disabled="editLoading" type="submit" class="btn-submit">
-                            {{ editLoading ? 'Saving...' : 'Save Changes' }}
-                        </button>
-                        <div v-if="editError" class="error-alert">{{ editError }}</div>
-                    </form>
+                            <div class="form-group">
+                                <label class="form-label">Name</label>
+                                <input v-model="editForm.name" type="text" class="form-input" required placeholder="Enter new name" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Description</label>
+                                <input v-model="editForm.description" type="text" class="form-input" required placeholder="Enter new description" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Price</label>
+                                <input v-model.number="editForm.price" type="number" min="0" step="any" class="form-input" required placeholder="Enter new price" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Stock</label>
+                                <input v-model.number="editForm.stock" type="number" min="0" class="form-input" required placeholder="Enter new stock" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Photo URL</label>
+                                <input v-model="editForm.url" type="url" class="form-input" placeholder="Enter photo URL (e.g. https://...)" />
+                            </div>
+                            <button :disabled="editLoading" type="submit" class="btn-submit">
+                                {{ editLoading ? 'Saving...' : 'Save Changes' }}
+                            </button>
+                            <div v-if="editError" class="error-alert">{{ editError }}</div>
+                        </form>
                 </div>
             </div>
         </div>
@@ -252,6 +300,33 @@
     max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
+}
+
+.admin-actions {
+    display: flex;
+    gap: 18px;
+    align-items: center;
+}
+
+.btn-view-orders {
+    background: #045c98;
+    color: #fff;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(4, 92, 152, 0.18);
+}
+
+.btn-view-orders:hover {
+    background: #0676c5;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(4, 92, 152, 0.25);
 }
 
 .admin-title {
@@ -398,7 +473,6 @@
     font-style: italic;
 }
 
-/* Modal Styles - Modern Japanese Inspired */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -579,5 +653,19 @@
     font-size: 13px;
     border-left: 4px solid #dc3545;
     font-weight: 500;
+}
+
+.product-thumbnail {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+}
+
+.no-image {
+    color: #999;
+    font-size: 13px;
+    font-style: italic;
 }
 </style>

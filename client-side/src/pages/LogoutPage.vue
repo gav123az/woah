@@ -1,6 +1,22 @@
+<script setup>
+    import { useGlobalStore } from "../stores/global";
+    import { useRouter } from "vue-router";
+
+    const global = useGlobalStore();
+    const router = useRouter();
+
+    function handleConfirm() {
+        global.logout();
+        router.push({ path: "/login" });
+    }
+
+    function handleCancel() {
+        router.back();
+    }
+</script>
+
 <template>
     <div class="logout-container">
-        <!-- Confirmation Modal -->
         <div class="modal-overlay">
             <div class="modal-content">
                 <div class="modal-header">
@@ -17,23 +33,6 @@
         </div>
     </div>
 </template>
-
-<script setup>
-    import { useGlobalStore } from '../stores/global';
-    import { useRouter } from 'vue-router';
-
-    const global = useGlobalStore();
-    const router = useRouter();
-
-    function handleConfirm() {
-        global.logout();
-        router.push({ path: '/login' });
-    }
-
-    function handleCancel() {
-        router.back();
-    }
-</script>
 
 <style scoped>
 .logout-container {

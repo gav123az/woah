@@ -1,34 +1,23 @@
 <template>
-  <div>
-    <div class="hero-section">
-      <div class="hero-container">
-        <!-- Left Side: Content -->
-        <div class="hero-left">
-          <p class="japanese-label">ラーメン</p>
-          <div class="wavy-line"></div>
-          <h1 class="hero-title">A BOWL OF LOVE FROM<br /><span class="highlight">JAPANESE CUISINE</span><br />FOR YOU</h1>
-          <router-link to="/products" class="btn-order">Order Now</router-link>
-          <p class="hero-subtitle">Ramen is a traditional Japanese noodle soup. It consists of Chinese wheat noodles served in a meat or fish-based broth & uses toppings such as sliced pork, nori, menma, and scallions.</p>
-          
-          
-          
-          
+    <div>
+        <div class="hero-section">
+            <div class="hero-container">
+                <div class="hero-left">
+                    <p class="japanese-label">ラーメン</p>
+                    <div class="wavy-line"></div>
+                    <h1 class="hero-title">A BOWL OF LOVE FROM<br /><span class="highlight">JAPANESE CUISINE</span><br />FOR YOU</h1>
+                    <router-link to="/products" class="btn-order">Order Now</router-link>
+                    <p class="hero-subtitle">Ramen is a traditional Japanese noodle soup. It consists of Chinese wheat noodles served in a meat or fish-based broth & uses toppings such as sliced pork, nori, menma, and scallions.</p>
+                </div>
+                <div class="hero-right">
+                    <div class="hero-image-container">
+                      <img src="https://static.vecteezy.com/system/resources/thumbnails/027/291/207/small_2x/cartoon-ramen-no-background-free-png.png" alt="Ramen" class="hero-image" />
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <!-- Right Side: Image -->
-        <div class="hero-right">
-          <div class="hero-image-container">
-            <img src="https://static.vecteezy.com/system/resources/thumbnails/027/291/207/small_2x/cartoon-ramen-no-background-free-png.png" alt="Ramen" class="hero-image" />
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
 </template>
-
-<script setup>
-// Home page
-</script>
 
 <style scoped>
 .hero-section {
@@ -216,4 +205,3 @@
   }
 }
 </style>
-

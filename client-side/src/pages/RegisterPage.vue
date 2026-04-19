@@ -1,15 +1,15 @@
 <script setup>
-    import { watch, ref, onBeforeMount } from 'vue';
-    import { Notyf } from 'notyf';
-    import { useRouter } from 'vue-router';
-    import { useGlobalStore } from '../stores/global';
-    import api from '../api';
+    import { watch, ref, onBeforeMount } from "vue";
+    import { Notyf } from "notyf";
+    import { useRouter } from "vue-router";
+    import { useGlobalStore } from "../stores/global";
+    import api from "../api";
 
-    const firstName = ref('');
-    const lastName = ref('');
-    const mobileNo = ref('');
-    const email = ref('');
-    const password = ref('');
+    const firstName = ref("");
+    const lastName = ref("");
+    const mobileNo = ref("");
+    const email = ref("");
+    const password = ref("");
     const isEnabled = ref(false);
 
     const notyf = new Notyf();
@@ -17,12 +17,12 @@
     const globalStore = useGlobalStore();
 
     watch([firstName, lastName, email, mobileNo, password], (currentValue) => {
-        isEnabled.value = currentValue.every(input => input !== "") && password.value.length >= 8;
+        isEnabled.value = currentValue.every((input) => input !== "") && password.value.length >= 8;
     });
 
     async function handleSubmit() {
         try {
-            await api.post('/users/register', {
+            await api.post("/users/register", {
                 firstName: firstName.value,
                 lastName: lastName.value,
                 email: email.value,
@@ -30,15 +30,14 @@
                 password: password.value
             });
 
-            notyf.success('Registration Successful');
-            firstName.value = '';
-            lastName.value = '';
-            mobileNo.value = '';
-            email.value = '';
-            password.value = '';
+            notyf.success("Registration Successful");
+            firstName.value = "";
+            lastName.value = "";
+            mobileNo.value = "";
+            email.value = "";
+            password.value = "";
 
-            // Redirect to login after successful registration
-            router.push({ path: '/login' });
+            router.push({ path: "/login" });
         } catch (error) {
             if (
                 error.response &&
@@ -47,14 +46,18 @@
                 notyf.error(error.response.data.message);
             } else {
                 console.error(error);
-                notyf.error('Registration Failed. Please contact administrator.');
+                notyf.error("Registration Failed. Please contact administrator.");
             }
         }
     }
 
     onBeforeMount(() => {
         if (globalStore.user && globalStore.user.token) {
-            router.push({ path: '/products' });
+            if (globalStore.user.isAdmin) {
+                router.push({ name: "Admin" });
+            } else {
+                router.push({ path: "/products" });
+            }
         }
     });
 </script>
